@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル牧場シミュレーション</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="title-bar">
+            <h1>シンプル牧場シミュレーション</h1>
+            <button id="reset-button">リセット</button>
+        </div>
+        <div id="status">
+            <p>所持金: <span id="money">1000</span>G</p>
+            <p>餌: <span id="feed">0</span>個</p>
+        </div>
+    </header>
+
+    <main>
+        <!-- 牧場画面 -->
+        <section id="farm-screen">
+            <h2>牧場</h2>
+            <div id="farm-area">
+                <!-- ここに動物が表示される -->
+            </div>
+            <button id="shop-button">ショップへ</button>
+        </section>
+
+        <!-- ショップ画面 (初期状態では非表示) -->
+        <section id="shop-screen" style="display: none;">
+            <h2>ショップ</h2>
+            <div id="shop-items">
+                <div class="item">
+                    <p>ひよこ (🐥)</p>
+                    <p>価格: 100G</p>
+                    <button id="buy-chick">購入</button>
+                </div>
+                <div class="item">
+                    <p>餌</p>
+                    <p>価格: 20G</p>
+                    <button id="buy-feed">購入</button>
+                </div>
+            </div>
+            <button id="farm-button">牧場へ戻る</button>
+        </section>
+    </main>
+
+    <script src="main.js"></script>
+</body>
+</html>
