@@ -105,7 +105,8 @@ button:hover {
 }
 
 .animal {
-    position: absolute;
+    position: absolute; /* 牧場内に配置するためabsoluteに戻す */
+    z-index: 9998; /* animal自体を9998に */
     font-size: 2rem; /* 絵文字のサイズ */
     cursor: pointer;
     user-select: none; /* テキスト選択を防ぐ */
@@ -114,6 +115,10 @@ button:hover {
 
 .animal:hover {
     transform: scale(1.2);
+}
+
+.animal:hover .info-popup {
+    transform: scale(calc(1 / 1.2)); /* 親の拡大を打ち消す */
 }
 
 .animal .info-popup {
@@ -126,7 +131,8 @@ button:hover {
     padding: 8px;
     position: absolute;
     z-index: 1;
-    bottom: 125%; /* 動物の上に表示 */
+    bottom: 100%; /* 動物の上端にポップアップの下端を合わせる */
+    margin-bottom: 10px; /* 動物との間に10pxのスペース */
     left: 50%;
     margin-left: -80px;
     opacity: 0;
@@ -136,7 +142,7 @@ button:hover {
 .animal .info-popup.show {
     visibility: visible;
     opacity: 1;
-    z-index: 10; /* 表示されたポップアップを最前面に */
+    z-index: 9999; /* 表示されたポップアップを最前面に */
 }
 
 .info-popup p {
@@ -186,16 +192,7 @@ button:hover {
         padding: 10px;
     }
 
-    .farm-header {
-        flex-direction: column; /* ヘッダー内の要素を縦並びにする */
-        align-items: flex-start; /* 左揃え */
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
     #shop-button {
-        align-self: stretch; /* ボタンをヘッダーの幅いっぱいに広げる */
-        text-align: center;
     }
 }
 
@@ -204,7 +201,7 @@ button:hover {
    =================================================================== */
 #game-message {
     position: fixed; /* 画面に固定 */
-    bottom: 20px; /* 下から20pxの位置 */
+    top: 20px; /* 上から20pxの位置 */
     left: 50%;
     transform: translateX(-50%); /* 中央揃え */
     background-color: rgba(0, 0, 0, 0.75); /* 半透明の黒 */
@@ -216,6 +213,9 @@ button:hover {
     visibility: hidden;
     transition: opacity 0.5s, visibility 0.5s; /* フェードイン・アウト */
     pointer-events: none; /* メッセージが表示されていても下の要素をクリックできる */
+    max-width: 90%; /* 画面幅の90%に制限 */
+    word-wrap: break-word; /* 長い単語も折り返す */
+    box-sizing: border-box; /* paddingを含めて幅を計算 */
 }
 
 #game-message.show {

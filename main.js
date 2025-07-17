@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 farmArea.removeChild(activeAnimalElement);
                 gameState.animals.splice(animalIndex, 1);
                 updateStatusUI();
-                alert('ニワトリを出荷しました！');
+                showMessage('ニワトリを出荷しました！');
             }
         } else {
             // --- クリック時の処理 ---
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         farmArea.removeChild(animal.element);
                         gameState.animals.splice(animalIndex, 1);
                         updateStatusUI();
-                        alert('ニワトリを出荷しました！');
+                        showMessage('ニワトリを出荷しました！');
                     }
                 }
             }
@@ -316,10 +316,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (popup) {
                     // 他のポップアップをすべて閉じる
                     document.querySelectorAll('.info-popup.show').forEach(p => {
-                        if (p !== popup) p.classList.remove('show');
+                        if (p !== popup) {
+                            p.classList.remove('show');
+                            // 閉じられるポップアップの親animalのz-indexを元に戻す
+                            p.closest('.animal').style.zIndex = 9998; // CSSのデフォルト値に戻す
+                        }
                     });
+
                     // このポップアップの表示/非表示を切り替え
                     popup.classList.toggle('show');
+
+                    // ポップアップの表示状態に応じて、animalのz-indexを調整
+                    if (popup.classList.contains('show')) { // 表示された場合
+                        activeAnimalElement.style.zIndex = 20000; // 他のanimalより高く
+                    } else { // 非表示になった場合
+                        activeAnimalElement.style.zIndex = 9998; // CSSのデフォルト値に戻す
+                    }
                 }
             }
             // 背景（何もない場所）がクリックされた場合
