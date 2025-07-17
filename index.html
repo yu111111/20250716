@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプル牧場シミュレーション</title>
+    <title>にわとり牧場</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <div class="title-bar">
-            <h1>シンプル牧場シミュレーション</h1>
+            <h1>にわとり牧場</h1>
             <button id="reset-button">リセット</button>
         </div>
         <div id="status">
@@ -22,11 +22,13 @@
     <main>
         <!-- 牧場画面 -->
         <section id="farm-screen">
-            <h2>牧場</h2>
+            <div class="farm-header">
+                <h2>牧場</h2>
+                <button id="shop-button">ショップへ</button>
+            </div>
             <div id="farm-area">
                 <!-- ここに動物が表示される -->
             </div>
-            <button id="shop-button">ショップへ</button>
         </section>
 
         <!-- ショップ画面 (初期状態では非表示) -->

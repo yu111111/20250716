@@ -44,8 +44,19 @@ h1 {
 }
 
 main {
-    max-width: 800px;
+    max-width: 800px; /* 元の幅に戻す */
     margin: 0 auto;
+}
+
+.farm-header {
+    display: flex;
+    justify-content: space-between; /* 両端に配置 */
+    align-items: center; /* 上下中央揃え */
+    margin-bottom: 10px; /* 牧場エリアとの間に余白 */
+}
+
+.farm-header h2 {
+    margin: 0; /* h2のデフォルトマージンを削除 */
 }
 
 #farm-area {
@@ -125,6 +136,7 @@ button:hover {
 .animal .info-popup.show {
     visibility: visible;
     opacity: 1;
+    z-index: 10; /* 表示されたポップアップを最前面に */
 }
 
 .info-popup p {
