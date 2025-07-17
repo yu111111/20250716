@@ -199,8 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // イベントリスナー（イベント委任） - ドラッグ＆クリック対応
     // ===================================================================
     let activeAnimalElement = null; // mousedownされた動物要素
-    let isDragging = false;
-    let dragStartX, dragStartY;
     // mousedownからmouseupまでのターゲットを一貫して扱うための変数
     let targetOnMouseDown = null;
 
@@ -211,49 +209,20 @@ document.addEventListener('DOMContentLoaded', () => {
         targetOnMouseDown = e.target;
         activeAnimalElement = targetOnMouseDown.closest('.animal');
 
-        // ドラッグ開始の準備
         e.preventDefault(); // デフォルトのドラッグやテキスト選択をキャンセル
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-
-        document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     });
 
-    function onMouseMove(e) {
-        if (!isDragging && activeAnimalElement) {
-            const dx = e.clientX - dragStartX;
-            const dy = e.clientY - dragStartY;
-
-            // 一定距離を移動したらドラッグと判定
-            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                isDragging = true;
-                // ドラッグが開始されたのが出荷可能なニワトリの場合のみ、スタイルを変更
-                if (activeAnimalElement.classList.contains('ready-to-ship')) {
-                    activeAnimalElement.style.zIndex = 1000;
-                    activeAnimalElement.style.cursor = 'grabbing';
-                    // ポップアップを隠す
-                    const popup = activeAnimalElement.querySelector('.info-popup');
-                    if (popup) popup.classList.remove('show');
-                }
-            }
-        }
-
-        // ドラッグ中の処理
-        if (isDragging && activeAnimalElement && activeAnimalElement.classList.contains('ready-to-ship')) {
-            const dx = e.clientX - dragStartX;
-            const dy = e.clientY - dragStartY;
-            // transformで要素を移動
-            activeAnimalElement.style.transform = `translate(${dx}px, ${dy}px)`;
-        }
-    }
+    
 
     function onMouseUp(e) {
-        if (isDragging && activeAnimalElement && activeAnimalElement.classList.contains('ready-to-ship')) {
-            // --- ドラッグ終了時の処理（出荷） ---
+        // --- クリック時の処理 ---
+        const currentTarget = targetOnMouseDown; // mousedown時のターゲットで判定
+
+        // クリックされた動物が出荷可能な場合、そのまま出荷する
+        if (activeAnimalElement && activeAnimalElement.classList.contains('ready-to-ship')) {
             const id = activeAnimalElement.dataset.id;
             const animalIndex = gameState.animals.findIndex(a => a.id == id);
-
             if (animalIndex !== -1) {
                 gameState.money += SHIP_PRICE;
                 farmArea.removeChild(activeAnimalElement);
@@ -261,85 +230,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateStatusUI();
                 showMessage('ニワトリを出荷しました！');
             }
-        } else {
-            // --- クリック時の処理 ---
-            const currentTarget = targetOnMouseDown; // mousedown時のターゲットで判定
+            return; // 出荷処理をしたのでここで終了
+        }
 
-            // クリックされた動物が出荷可能な場合、そのまま出荷する
-            if (activeAnimalElement && activeAnimalElement.classList.contains('ready-to-ship')) {
-                const id = activeAnimalElement.dataset.id;
-                const animalIndex = gameState.animals.findIndex(a => a.id == id);
-                if (animalIndex !== -1) {
+        // 餌やりボタンが押された場合
+        if (currentTarget.classList.contains('feed-button')) {
+            const id = currentTarget.dataset.id;
+            const animal = gameState.animals.find(a => a.id == id);
+            if (animal && gameState.feed > 0 && !animal.isBoosted) {
+                gameState.feed--;
+                animal.isBoosted = true;
+                animal.boostEndTime = Date.now() + FEED_BOOST_DURATION * 1000;
+                updateStatusUI();
+                showMessage('餌をあげました！成長速度がアップ！');
+            } else if (gameState.feed <= 0) {
+                showMessage('餌がありません！ショップで購入してください。');
+            } else if (animal.isBoosted) {
+                showMessage('すでに速度アップ中です！');
+            }
+        }
+        // 出荷ボタンが押された場合 (ポップアップ内のボタン)
+        else if (currentTarget.classList.contains('ship-button')) {
+            const id = currentTarget.dataset.id;
+            const animalIndex = gameState.animals.findIndex(a => a.id == id);
+            if (animalIndex !== -1) {
+                const animal = gameState.animals[animalIndex];
+                if (animal.type === 'chicken' && animal.size >= CHICKEN_SHIP_TIME) {
                     gameState.money += SHIP_PRICE;
-                    farmArea.removeChild(activeAnimalElement);
+                    farmArea.removeChild(animal.element);
                     gameState.animals.splice(animalIndex, 1);
                     updateStatusUI();
                     showMessage('ニワトリを出荷しました！');
                 }
-                return; // 出荷処理をしたのでここで終了
             }
-
-            // 餌やりボタンが押された場合
-            if (currentTarget.classList.contains('feed-button')) {
-                const id = currentTarget.dataset.id;
-                const animal = gameState.animals.find(a => a.id == id);
-                if (animal && gameState.feed > 0 && !animal.isBoosted) {
-                    gameState.feed--;
-                    animal.isBoosted = true;
-                    animal.boostEndTime = Date.now() + FEED_BOOST_DURATION * 1000;
-                    updateStatusUI();
-                    showMessage('餌をあげました！成長速度がアップ！');
-                } else if (gameState.feed <= 0) {
-                    showMessage('餌がありません！ショップで購入してください。');
-                } else if (animal.isBoosted) {
-                    showMessage('すでに速度アップ中です！');
-                }
-            }
-            // 出荷ボタンが押された場合 (ポップアップ内のボタン)
-            else if (currentTarget.classList.contains('ship-button')) {
-                const id = currentTarget.dataset.id;
-                const animalIndex = gameState.animals.findIndex(a => a.id == id);
-                if (animalIndex !== -1) {
-                    const animal = gameState.animals[animalIndex];
-                    if (animal.type === 'chicken' && animal.size >= CHICKEN_SHIP_TIME) {
-                        gameState.money += SHIP_PRICE;
-                        farmArea.removeChild(animal.element);
-                        gameState.animals.splice(animalIndex, 1);
-                        updateStatusUI();
-                        showMessage('ニワトリを出荷しました！');
-                    }
-                }
-            }
-            // 動物自体がクリックされた場合 (出荷可能でない場合)
-            else if (activeAnimalElement) {
-                const popup = activeAnimalElement.querySelector('.info-popup');
-                if (popup) {
-                    // 他のポップアップをすべて閉じる
-                    document.querySelectorAll('.info-popup.show').forEach(p => {
-                        if (p !== popup) {
-                            p.classList.remove('show');
-                            // 閉じられるポップアップの親animalのz-indexを元に戻す
-                            p.closest('.animal').style.zIndex = 9998; // CSSのデフォルト値に戻す
-                        }
-                    });
-
-                    // このポップアップの表示/非表示を切り替え
-                    popup.classList.toggle('show');
-
-                    // ポップアップの表示状態に応じて、animalのz-indexを調整
-                    if (popup.classList.contains('show')) { // 表示された場合
-                        activeAnimalElement.style.zIndex = 20000; // 他のanimalより高く
-                    } else { // 非表示になった場合
-                        activeAnimalElement.style.zIndex = 9998; // CSSのデフォルト値に戻す
-                    }
-                }
-            }
-            // 背景（何もない場所）がクリックされた場合
-            else if (!currentTarget.closest('.animal')) {
+        }
+        // 動物自体がクリックされた場合 (出荷可能でない場合)
+        else if (activeAnimalElement) {
+            const popup = activeAnimalElement.querySelector('.info-popup');
+            if (popup) {
+                // 他のポップアップをすべて閉じる
                 document.querySelectorAll('.info-popup.show').forEach(p => {
-                    p.classList.remove('show');
+                    if (p !== popup) {
+                        p.classList.remove('show');
+                        // 閉じられるポップアップの親animalのz-indexを元に戻す
+                        p.closest('.animal').style.zIndex = 9998; // CSSのデフォルト値に戻す
+                    }
                 });
+
+                // このポップアップの表示/非表示を切り替え
+                popup.classList.toggle('show');
+
+                // ポップアップの表示状態に応じて、animalのz-indexを調整
+                if (popup.classList.contains('show')) { // 表示された場合
+                    activeAnimalElement.style.zIndex = 20000; // 他のanimalより高く
+                } else { // 非表示になった場合
+                    activeAnimalElement.style.zIndex = 9998; // CSSのデフォルト値に戻す
+                }
             }
+        }
+        // 背景（何もない場所）がクリックされた場合
+        else if (!currentTarget.closest('.animal')) {
+            document.querySelectorAll('.info-popup.show').forEach(p => {
+                p.classList.remove('show');
+            });
         }
 
         // --- クリーンアップ処理 ---
@@ -347,12 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // スタイルを元に戻す
             activeAnimalElement.style.zIndex = '';
             activeAnimalElement.style.cursor = '';
-            activeAnimalElement.style.transform = '';
         }
         activeAnimalElement = null;
-        isDragging = false;
         targetOnMouseDown = null;
-        document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
     }
 

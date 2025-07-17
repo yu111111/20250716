@@ -5,6 +5,11 @@ body {
     margin: 0;
     padding: 20px;
     text-align: center;
+    box-sizing: border-box;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 header {
@@ -123,7 +128,9 @@ button:hover {
 
 .animal .info-popup {
     visibility: hidden;
-    width: 160px;
+    max-width: 160px; /* 固定幅ではなく最大幅に */
+    width: max-content; /* コンテンツの幅に合わせる */
+    min-width: 100px; /* 最小幅を設定 */
     background-color: rgba(0, 0, 0, 0.8);
     color: #fff;
     text-align: center;
@@ -134,7 +141,7 @@ button:hover {
     bottom: 100%; /* 動物の上端にポップアップの下端を合わせる */
     margin-bottom: 10px; /* 動物との間に10pxのスペース */
     left: 50%;
-    margin-left: -80px;
+    transform: translateX(-50%); /* 中央揃え */
     opacity: 0;
     transition: opacity 0.3s;
 }
@@ -189,10 +196,7 @@ button:hover {
    =================================================================== */
 @media (max-width: 600px) {
     body {
-        padding: 10px;
-    }
-
-    #shop-button {
+        padding: 0;
     }
 }
 
@@ -222,3 +226,4 @@ button:hover {
     opacity: 1;
     visibility: visible;
 }
+
