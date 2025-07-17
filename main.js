@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const buyChickButton = document.getElementById('buy-chick');
     const buyFeedButton = document.getElementById('buy-feed');
     const resetButton = document.getElementById('reset-button');
+    const messageElement = document.getElementById('game-message');
 
     // --- ゲームの状態管理 ---
     let gameState = {
@@ -20,6 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
         animals: [], // {id, type, age, size, element} のようなオブジェクトを格納
         lastUpdate: Date.now(),
     };
+
+    // --- ゲーム内メッセージ表示 ---
+    let messageTimer;
+    function showMessage(message) {
+        messageElement.textContent = message;
+        messageElement.classList.add('show');
+
+        // 既存のタイマーがあればクリア
+        clearTimeout(messageTimer);
+
+        // 2.5秒後にメッセージを消す
+        messageTimer = setTimeout(() => {
+            messageElement.classList.remove('show');
+        }, 2500);
+    }
 
     // --- 定数 ---
     const CHICK_PRICE = 100;
@@ -51,9 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.money -= CHICK_PRICE;
             addAnimal('chick');
             updateStatusUI();
-            alert('ひよこを1羽購入しました！');
+            showMessage('ひよこを1羽購入しました！');
         } else {
-            alert('お金が足りません！');
+            showMessage('お金が足りません！');
         }
     });
 
@@ -62,9 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.money -= FEED_PRICE;
             gameState.feed++;
             updateStatusUI();
-            alert('餌を1つ購入しました！');
+            showMessage('餌を1つ購入しました！');
         } else {
-            alert('お金が足りません！');
+            showMessage('お金が足りません！');
         }
     });
 
@@ -92,16 +108,31 @@ document.addEventListener('DOMContentLoaded', () => {
         el.dataset.id = id;
         el.textContent = type === 'chick' ? '🐥' : '🐔';
 
-        // 牧場の枠線ギリギリに配置（親要素のpaddingを考慮）
-        const farmRect = farmArea.getBoundingClientRect();
+        // 動物の配置を計算
+        // farmAreaが非表示(`display:none`)の場合、clientWidth/Heightが0になる問題の対策
         const animalSize = 40; // 動物要素のおおよそのサイズ
+        let availableWidth, availableHeight;
 
-        // farmAreaのpaddingを考慮しない、描画領域の実際の大きさを取得
-        const availableWidth = farmArea.clientWidth - animalSize;
-        const availableHeight = farmArea.clientHeight - animalSize;
+        if (farmArea.clientWidth > 0 && farmArea.clientHeight > 0) {
+            // farmAreaが表示されている場合（ロード時や牧場画面での操作時）
+            availableWidth = farmArea.clientWidth - animalSize;
+            availableHeight = farmArea.clientHeight - animalSize;
+        } else {
+            // farmAreaが非表示の場合（ショップでの購入時など）
+            // 表示されている親要素やCSSのスタイルからサイズを計算する
+            const mainElement = document.querySelector('main');
+            const farmStyle = window.getComputedStyle(farmArea);
+            const farmPaddingX = parseFloat(farmStyle.paddingLeft) + parseFloat(farmStyle.paddingRight);
+            const farmMinHeight = parseFloat(farmStyle.minHeight);
 
-        el.style.left = `${Math.random() * availableWidth}px`;
-        el.style.top = `${Math.random() * availableHeight}px`;
+            availableWidth = mainElement.clientWidth - farmPaddingX - animalSize;
+            availableHeight = farmMinHeight - animalSize;
+        }
+
+        // 計算結果がマイナスにならないように調整
+        el.style.left = `${Math.random() * Math.max(0, availableWidth)}px`;
+        el.style.top = `${Math.random() * Math.max(0, availableHeight)}px`;
+
 
         // ポップアップを作成（構造をここで確定）
         const popup = document.createElement('div');
@@ -234,6 +265,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- クリック時の処理 ---
             const currentTarget = targetOnMouseDown; // mousedown時のターゲットで判定
 
+            // クリックされた動物が出荷可能な場合、そのまま出荷する
+            if (activeAnimalElement && activeAnimalElement.classList.contains('ready-to-ship')) {
+                const id = activeAnimalElement.dataset.id;
+                const animalIndex = gameState.animals.findIndex(a => a.id == id);
+                if (animalIndex !== -1) {
+                    gameState.money += SHIP_PRICE;
+                    farmArea.removeChild(activeAnimalElement);
+                    gameState.animals.splice(animalIndex, 1);
+                    updateStatusUI();
+                    showMessage('ニワトリを出荷しました！');
+                }
+                return; // 出荷処理をしたのでここで終了
+            }
+
             // 餌やりボタンが押された場合
             if (currentTarget.classList.contains('feed-button')) {
                 const id = currentTarget.dataset.id;
@@ -243,14 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     animal.isBoosted = true;
                     animal.boostEndTime = Date.now() + FEED_BOOST_DURATION * 1000;
                     updateStatusUI();
-                    alert('餌をあげました！成長速度がアップ！');
+                    showMessage('餌をあげました！成長速度がアップ！');
                 } else if (gameState.feed <= 0) {
-                    alert('餌がありません！ショップで購入してください。');
+                    showMessage('餌がありません！ショップで購入してください。');
                 } else if (animal.isBoosted) {
-                    alert('すでに速度アップ中です！');
+                    showMessage('すでに速度アップ中です！');
                 }
             }
-            // 出荷ボタンが押された場合
+            // 出荷ボタンが押された場合 (ポップアップ内のボタン)
             else if (currentTarget.classList.contains('ship-button')) {
                 const id = currentTarget.dataset.id;
                 const animalIndex = gameState.animals.findIndex(a => a.id == id);
@@ -265,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            // 動物自体がクリックされた場合
+            // 動物自体がクリックされた場合 (出荷可能でない場合)
             else if (activeAnimalElement) {
                 const popup = activeAnimalElement.querySelector('.info-popup');
                 if (popup) {
@@ -337,7 +382,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 animal.age += delta * multiplier;
                 if (animal.age >= CHICK_GROW_TIME) {
                     animal.type = 'chicken';
-                    animal.element.textContent = '🐔'; // 見た目をニワトリに
+                    // element.textContentを書き換えるとポップアップが消えるため、
+                    // 子ノードの中のテキストノードだけを更新する
+                    animal.element.childNodes[0].nodeValue = '🐔';
                 }
             } else if (animal.type === 'chicken') {
                 if (animal.size < CHICKEN_SHIP_TIME) {

@@ -177,3 +177,48 @@ button:hover {
     from { filter: drop-shadow(0 0 2px red); }
     to { filter: drop-shadow(0 0 8px red); }
 }
+
+/* ===================================================================
+   レスポンシブ対応 (スマホ向け)
+   =================================================================== */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .farm-header {
+        flex-direction: column; /* ヘッダー内の要素を縦並びにする */
+        align-items: flex-start; /* 左揃え */
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    #shop-button {
+        align-self: stretch; /* ボタンをヘッダーの幅いっぱいに広げる */
+        text-align: center;
+    }
+}
+
+/* ===================================================================
+   ゲーム内メッセージ
+   =================================================================== */
+#game-message {
+    position: fixed; /* 画面に固定 */
+    bottom: 20px; /* 下から20pxの位置 */
+    left: 50%;
+    transform: translateX(-50%); /* 中央揃え */
+    background-color: rgba(0, 0, 0, 0.75); /* 半透明の黒 */
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px; /* 角を丸く */
+    z-index: 2000; /* 最前面に表示 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0.5s; /* フェードイン・アウト */
+    pointer-events: none; /* メッセージが表示されていても下の要素をクリックできる */
+}
+
+#game-message.show {
+    opacity: 1;
+    visibility: visible;
+}
